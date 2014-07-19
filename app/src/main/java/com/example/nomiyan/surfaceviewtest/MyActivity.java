@@ -2,8 +2,10 @@ package com.example.nomiyan.surfaceviewtest;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 
 
 public class MyActivity extends Activity {
@@ -36,5 +38,15 @@ public class MyActivity extends Activity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_UP:
+                Log.d("TouchEvent", "X:" + event.getX() + ",Y:" + event.getY());
+                surfaceView.addBall(50, (int)event.getX(), (int)event.getY(), (int)event.getX()/10);
+        }
+        return true;
     }
 }

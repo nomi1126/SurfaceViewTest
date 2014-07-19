@@ -8,37 +8,23 @@ import android.graphics.Paint.Style;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 public class AnimationSurfaceView extends SurfaceView implements Runnable, SurfaceHolder.Callback {
 
-    static final long FPS        = 20;
-    static final long FRAME_TIME = 1000 / FPS;
-    static final int BALL_R      = 100;
+    static final long FPS = 20;
     SurfaceHolder surfaceHolder;
     Thread thread;
-    int cx       = BALL_R,
-            cy       = BALL_R,
-            velocity = 20,
-            dir_x    = 1,
-            dir_y    = 1,
-            screen_width,
-            screen_height;
+    int screen_width,
+        screen_height;
+
+    ArrayList<Ball> ballList = new ArrayList<Ball>();
 
     public AnimationSurfaceView(Context context) {
         super(context);
         surfaceHolder = getHolder();
         surfaceHolder.addCallback(this);
-    }
-
-    /**
-     * 乱数を返す
-     * @param maxNum
-     * @return
-     */
-    private int getRandomNum(int maxNum) {
-        Random random = new Random();
-        return random.nextInt(maxNum);
     }
 
     @Override
@@ -53,44 +39,43 @@ public class AnimationSurfaceView extends SurfaceView implements Runnable, Surfa
 
         // Ball
         paint.setStyle(Style.FILL);
-        paint.setColor(Color.argb(255, getRandomNum(255), getRandomNum(255), getRandomNum(255)));
-
-        long loopCount = 0;
-        long waitTime  = 0;
-        long startTime = System.currentTimeMillis();
 
         while(thread != null){
 
             try{
-                loopCount++;
                 canvas = surfaceHolder.lockCanvas();
 
-                int new_cx = cx + velocity * dir_x;
-                int new_cy = cy + velocity * dir_y;
-
-                // 跳ね返りの計算
-                if (new_cx - BALL_R < 0 || new_cx + BALL_R > screen_width) {
-                    dir_x *= -1;
-                    paint.setColor(Color.argb(255, getRandomNum(255), getRandomNum(255), getRandomNum(255)));
-                }
-                if (new_cy - BALL_R < 0 || new_cy + BALL_R > screen_height) {
-                    dir_y *= -1;
-                    paint.setColor(Color.argb(255, getRandomNum(255), getRandomNum(255), getRandomNum(255)));
-                }
-
-                // 描画
+                // canvasを塗りつぶす（リセット効果）
                 canvas.drawRect(0, 0, screen_width, screen_height, bgPaint);
-                canvas.drawCircle(cx += (velocity * dir_x), cy += (velocity * dir_y), BALL_R, paint);
+
+                for (int i = 0, len = ballList.size(); i < len; i++) {
+                    Ball tempBall = ballList.get(i);
+
+                    int new_cx = tempBall.posX + tempBall.velocity * tempBall.dirX;
+                    int new_cy = tempBall.posY + tempBall.velocity * tempBall.dirY;
+
+                    // 跳ね返りの計算
+                    if (new_cx - tempBall.radius < 0 || new_cx + tempBall.radius > screen_width) {
+                        tempBall.updateDirX();
+                        tempBall.setColor();
+                    }
+                    if (new_cy - tempBall.radius < 0 || new_cy + tempBall.radius > screen_height) {
+                        tempBall.updateDirY();
+                        tempBall.setColor();
+                    }
+
+                    // 色を設定
+                    paint.setColor(tempBall.color);
+
+                    // ボールの位置を更新
+                    tempBall.setPosX(tempBall.velocity * tempBall.dirX);
+                    tempBall.setPosY(tempBall.velocity * tempBall.dirY);
+
+                    // 描画
+                    canvas.drawCircle(tempBall.posX, tempBall.posY, tempBall.radius, paint);
+                }
 
                 surfaceHolder.unlockCanvasAndPost(canvas);
-
-//                waitTime = (loopCount * FRAME_TIME)
-//                        - (System.currentTimeMillis() - startTime);
-//                Log.d("surface", Long.toString(waitTime));
-
-//                if( waitTime > 0 ){
-//                    Thread.sleep(waitTime);
-//                }
             }
             catch(Exception e){}
         }
@@ -105,6 +90,8 @@ public class AnimationSurfaceView extends SurfaceView implements Runnable, Surfa
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
+        Ball ball = new Ball(50, 200, 300, 30, 1, 1);
+        ballList.add(ball);
         thread = new Thread(this);
         thread.start();
     }
@@ -114,4 +101,17 @@ public class AnimationSurfaceView extends SurfaceView implements Runnable, Surfa
         thread = null;
     }
 
+    /**
+     * ボールの追加
+     * @param radius
+     * @param x
+     * @param y
+     * @param velocity
+     */
+    public void addBall(int radius, int x, int y, int velocity) {
+        int dirArray[] = {1, -1};
+        Random random  = new Random();
+        Ball ball      = new Ball(radius, x, y, velocity, dirArray[random.nextInt(2)], dirArray[random.nextInt(2)]);
+        ballList.add(ball);
+    }
 }
