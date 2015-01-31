@@ -13,11 +13,9 @@ import java.util.Random;
 
 public class AnimationSurfaceView extends SurfaceView implements Runnable, SurfaceHolder.Callback {
 
-    static final long FPS = 20;
     SurfaceHolder surfaceHolder;
     Thread thread;
-    int screen_width,
-        screen_height;
+    int screen_width, screen_height;
 
     ArrayList<Ball> ballList = new ArrayList<Ball>();
 
